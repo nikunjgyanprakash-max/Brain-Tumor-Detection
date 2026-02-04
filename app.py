@@ -3,59 +3,56 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from PIL import Image, ImageOps
 import numpy as np
+import gdown
+import os
 
-# 1. Load the Model ONCE (Caching makes it fast)
+# --- PASTE YOUR DRIVE FILE ID HERE ---
+# Example: file_id = '12345ABCDE...'
+file_id = 'YOUR_ACTUAL_ID_GOES_HERE'
+# -------------------------------------
+
 @st.cache_resource
-def load_brain_model():
-    model = load_model('brain_tumor_model.h5')
+def load_model_from_drive():
+    url = f'https://drive.google.com/uc?id={file_id}'
+    output = 'brain_tumor_model.h5'
+    
+    if not os.path.exists(output):
+        st.info("Downloading 143MB AI Model... Please wait.")
+        gdown.download(url, output, quiet=False)
+        st.success("Download Complete!")
+    
+    model = load_model(output)
     return model
 
-# 2. Page Title
-st.title("🧠 NeuroScan: AI Brain Tumor Detector")
-st.write("Upload an MRI scan to detect potential tumors.")
+st.title("🧠 NeuroScan: Pro Edition")
+st.write("System Status: Initializing Heavy Model...")
 
-# Load model with error handling
 try:
-    model = load_brain_model()
-    st.success("System Ready: AI Model Loaded")
+    model = load_model_from_drive()
+    st.success("✅ System Ready: 143MB Model Loaded")
 except Exception as e:
-    st.error(f"Error loading model: {e}")
+    st.error("Error loading model. Check your Google Drive Link ID.")
     st.stop()
 
-# 3. The Upload Button
-uploaded_file = st.file_uploader("Choose a Brain MRI...", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
 
-if uploaded_file is not None:
-    # Display the image
-    img = Image.open(uploaded_file)
-    st.image(img, caption='Uploaded MRI Scan', use_container_width=True)
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.image(image, caption='Uploaded Scan', use_container_width=True)
     
-    # 4. Preprocess (Resize & Color Match)
-    if st.button("Analyze Scan"):
-        # Resize to 224x224
-        img_resized = img.resize((224, 224))
+    if st.button("Analyze"):
+        # Resize and Convert to RGB (The Fat Model needs RGB)
+        img = image.resize((224, 224))
+        img = img.convert('RGB')
+        img_array = np.array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
         
-        # FIX: Convert to RGB (3 channels) to match the new model
-        img_rgb = img_resized.convert('RGB')
-        
-        # Convert to array and normalize
-        img_array = np.array(img_rgb)
-        img_array = img_array / 255.0  
-        
-        # Reshape for the model: (1, 224, 224, 3)
-        img_array = np.expand_dims(img_array, axis=0) 
-
-        # 5. Predict
         prediction = model.predict(img_array)
-        confidence = prediction[0][0]
+        score = prediction[0][0]
         
-        st.write("---")
-        st.subheader("Analysis Results:")
+        st.write(f"Confidence Score: {score:.4f}")
         
-        # Logic: > 0.5 is Tumor, <= 0.5 is Healthy
-        if confidence > 0.5:
-            st.error(f"🚨 TUMOR DETECTED (Confidence: {confidence:.2%})")
-            st.warning("Recommendation: Immediate Clinical Referral.")
+        if score > 0.5:
+            st.error(f"🚨 TUMOR DETECTED ({score:.1%})")
         else:
-            st.success(f"✅ HEALTHY (Confidence: {(1-confidence):.2%})")
-            st.info("Recommendation: Routine Check-up.")
+            st.success(f"✅ HEALTHY ({(1-score):.1%})")
