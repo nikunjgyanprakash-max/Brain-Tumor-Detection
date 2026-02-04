@@ -1,13 +1,12 @@
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 
 # 1. Load the Model ONCE (Caching makes it fast)
 @st.cache_resource
 def load_brain_model():
-    # Ensure 'brain_tumor_model.h5' is in the same folder as this file
     model = load_model('brain_tumor_model.h5')
     return model
 
@@ -31,21 +30,20 @@ if uploaded_file is not None:
     img = Image.open(uploaded_file)
     st.image(img, caption='Uploaded MRI Scan', use_container_width=True)
     
-    # 4. Preprocess (Resize & Grayscale to match training)
+    # 4. Preprocess (Resize & Color Match)
     if st.button("Analyze Scan"):
         # Resize to 224x224
         img_resized = img.resize((224, 224))
         
-        # Convert to grayscale (L mode)
-        img_gray = img_resized.convert('L')
+        # FIX: Convert to RGB (3 channels) to match the new model
+        img_rgb = img_resized.convert('RGB')
         
         # Convert to array and normalize
-        img_array = np.array(img_gray)
+        img_array = np.array(img_rgb)
         img_array = img_array / 255.0  
         
-        # Reshape for the model: (1, 224, 224, 1)
+        # Reshape for the model: (1, 224, 224, 3)
         img_array = np.expand_dims(img_array, axis=0) 
-        img_array = np.expand_dims(img_array, axis=-1)
 
         # 5. Predict
         prediction = model.predict(img_array)
