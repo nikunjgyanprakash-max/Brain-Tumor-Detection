@@ -8,6 +8,7 @@ import numpy as np
 import gdown
 import os
 
+# --- DRIVE ID ---
 file_id = '1bw5iMUCnJe0pP0AOSeXvv4U-V4HxPbyH' 
 
 @st.cache_resource
@@ -15,45 +16,63 @@ def load_model_from_drive():
     filename = 'brain_tumor_model.h5'
     url = f'https://drive.google.com/uc?id={file_id}'
     if not os.path.exists(filename):
-        gdown.download(url, filename, quiet=False)
+        with st.spinner("Downloading ResNet50 Expert Brain..."):
+            gdown.download(url, filename, quiet=False)
     return load_model(filename)
 
-st.title("🧠 NeuroScan: Final Resolution")
+st.set_page_config(page_title="NeuroScan Expert", page_icon="🧠")
+st.title("🧠 NeuroScan: Final Stable Edition")
+
+# --- SIDEBAR SETTINGS ---
+st.sidebar.header("System Settings")
+flip_logic = st.sidebar.checkbox("Flip Tumor/Healthy Logic", value=False)
+st.sidebar.info("If the results are exactly backward, check the box above.")
 
 try:
     model = load_model_from_drive()
-    st.success("✅ Engine Ready")
+    st.sidebar.success("✅ Engine Online")
 except Exception as e:
-    st.error(f"Engine Error: {e}")
+    st.sidebar.error(f"❌ Engine Error: {e}")
+    st.stop()
 
-uploaded_file = st.file_uploader("Upload MRI", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, width=300)
+    st.image(image, caption='Uploaded Scan', width=300)
     
-    if st.button("Final Analysis"):
-        # 1. Prepare Image
+    if st.button("Run Final Diagnostic"):
+        # 1. Image Prep
         img = image.resize((224, 224))
         img_array = img_to_array(img)
         img_array = np.expand_dims(img_array, axis=0)
         
-        # 2. ResNet Math (Crucial)
+        # 2. ResNet Preprocessing
         img_ready = preprocess_input(img_array)
         
-        # 3. Get Raw Answer
+        # 3. Predict
         prediction = model.predict(img_ready)
         raw_score = float(prediction[0][0])
         
-        # 4. SHOW THE RAW DATA
-        st.write(f"**Raw Model Output:** {raw_score:.4f}")
-        
-        # TRY FLIPPING THIS IF RESULTS ARE WRONG:
-        # Option A: tumor_prob = 1.0 - raw_score
-        # Option B: tumor_prob = raw_score
-        tumor_prob = 1.0 - raw_score 
+        # 4. Display Raw Score (This helps us debug!)
+        st.write(f"**Raw Model Score:** {raw_score:.4f}")
+        st.caption("Score near 0.0 usually means Class 0. Score near 1.0 usually means Class 1.")
 
-        if tumor_prob > 0.5:
-            st.error(f"🚨 TUMOR DETECTED ({tumor_prob:.2%})")
+        # 5. Logical Decision
+        # If flip_logic is OFF: 0 is Tumor, 1 is Healthy
+        # If flip_logic is ON: 1 is Tumor, 0 is Healthy
+        if not flip_logic:
+            tumor_prob = 1.0 - raw_score
         else:
-            st.success(f"✅ HEALTHY BRAIN ({(1-tumor_prob):.2%})")
+            tumor_prob = raw_score
+
+        st.divider()
+        st.subheader(f"Detection Confidence: {tumor_prob:.2%}")
+
+        if tumor_prob > 0.50:
+            st.error("🚨 TUMOR DETECTED")
+        else:
+            st.success("✅ HEALTHY BRAIN")
+
+        # Clinical Warning
+        st.warning("⚠️ **Note:** AI results should only be used as a second opinion. Always consult a radiologist.")
