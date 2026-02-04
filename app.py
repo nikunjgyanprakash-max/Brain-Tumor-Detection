@@ -7,38 +7,37 @@ import numpy as np
 import gdown
 import os
 
-# 1. Provide your Model ID
+# --- DRIVE ID ---
 file_id = '1bw5iMUCnJe0pP0AOSeXvv4U-V4HxPbyH'
 
 @st.cache_resource
 def load_model_from_drive():
-    filename = 'brain_tumor_model.h5'
+    filename = 'model.h5'
     if not os.path.exists(filename):
         url = f'https://drive.google.com/uc?id={file_id}'
         gdown.download(url, filename, quiet=False)
     return load_model(filename)
 
-# 2. Setup App
-st.title("Brain Tumor Detector")
+st.title("Brain Tumor Detection")
 model = load_model_from_drive()
 
 uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    # Display image
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, width=300)
     
-    # 3. Process and Predict
+    # 1. Prepare image
     img = image.resize((224, 224))
-    img_array = img_to_array(img) / 255.0  # Simple normalization
+    img_array = img_to_array(img) / 255.0  # Basic normalization
     img_array = np.expand_dims(img_array, axis=0)
     
+    # 2. Get prediction
     prediction = model.predict(img_array)
+    score = prediction[0][0]
     
-    # 4. Show Result
-    # (Assuming 0-0.5 is Tumor and 0.5-1.0 is Healthy)
-    if prediction[0][0] < 0.5:
-        st.error("Result: Tumor Detected")
+    # 3. Output result
+    if score < 0.5:
+        st.error(f"Tumor Detected (Score: {score:.4f})")
     else:
-        st.success("Result: Healthy")
+        st.success(f"Healthy (Score: {score:.4f})")
