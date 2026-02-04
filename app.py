@@ -51,9 +51,18 @@ if uploaded_file:
         # Do NOT divide by 255 manually; this function handles it.
         img_preprocessed = preprocess_input(img_array)
         
-        # 5. Predict
-        prediction = model.predict(img_preprocessed)
-        score = float(prediction[0][0])
+        # 5. # Use this block to see exactly what the model "thinks"
+prediction = model.predict(img_preprocessed)
+raw_score = float(prediction[0][0])
+
+st.write(f"**Raw AI Output Score:** {raw_score:.4f}")
+
+# Map the scores to classes based on alphabetical order
+# Score < 0.5 usually means Class 0 (the first folder alphabetically)
+if raw_score < 0.5:
+    st.error("Model Result: Class 0 (Check if this is Tumor in your folders)")
+else:
+    st.success("Model Result: Class 1 (Check if this is Healthy in your folders)")
         
         # Logic Check: Did your training use 'Brain_Tumor' as the first folder?
         # If yes, 0 is Tumor. We calculate Tumor Probability:
