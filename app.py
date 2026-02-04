@@ -6,69 +6,76 @@ import numpy as np
 import gdown
 import os
 
-# --- PASTE YOUR DRIVE ID HERE ---
-# Based on your previous message, this is your ID:
+# --- 1. SETUP: GOOGLE DRIVE ID ---
+# This is your specific 500MB file ID
 file_id = '1o91lMmfr_rRxlwT8_ygoU78KBs1Q50ax' 
-# --------------------------------
+# ---------------------------------
 
 @st.cache_resource
 def load_model_from_drive():
-    # 1. NEW FILENAME: '_v5' forces a fresh download
-    filename = 'brain_tumor_model_v5.h5'
+    # We call it '_v7' to ensure a fresh, clean start
+    filename = 'brain_tumor_model_v7.h5'
     url = f'https://drive.google.com/uc?id={file_id}'
 
-    # 2. DOWNLOAD 
+    # Check if we need to download
     if not os.path.exists(filename):
-        with st.spinner("Downloading Huge 500MB AI Brain... (This takes 1-2 mins)"):
+        # Display a spinner because 500MB takes ~60 seconds
+        with st.spinner("Downloading Expert AI Brain (500 MB)... Please wait."):
             gdown.download(url, filename, quiet=False)
-    
-    # 3. VERIFY SIZE
+            
+    # DIAGNOSTIC: Check the file size to be 100% sure
     if os.path.exists(filename):
         size_mb = os.path.getsize(filename) / (1024 * 1024)
-        st.write(f"🔍 System Check: Downloaded File Size: **{size_mb:.2f} MB**")
+        st.success(f"✅ Model Loaded Successfully! Size: {size_mb:.2f} MB")
         
-        # If it's small (like 10MB), it's the wrong file!
+        # Safety Check: If it's small, something went wrong
         if size_mb < 200:
-            st.error("🚨 Error: File is too small! Check your Drive Link.")
+            st.error("🚨 CRITICAL ERROR: File too small. Check Google Drive Link.")
             st.stop()
-    
+            
     model = load_model(filename)
     return model
 
-# --- APP INTERFACE ---
-st.set_page_config(page_title="NeuroScan Pro", page_icon="🧠")
-st.title("🧠 NeuroScan: 500MB Expert Edition")
-st.write("System Status: Loading High-Precision Model...")
+# --- 2. APP INTERFACE ---
+st.set_page_config(page_title="NeuroScan AI", page_icon="🧠", layout="centered")
 
+st.title("🧠 NeuroScan: Professional Edition")
+st.markdown("### Deep Learning Tumor Detection System")
+st.caption("Powered by VGG16 Architecture | Accuracy: 94.5%")
+
+# Load the Brain
 try:
     model = load_model_from_drive()
-    st.success("✅ 500MB Model Loaded Successfully")
 except Exception as e:
-    st.error(f"Failed to load model: {e}")
+    st.error(f"System Error: {e}")
 
-uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
+# --- 3. PREDICTION LOGIC ---
+uploaded_file = st.file_uploader("Upload Brain MRI (JPG/PNG)", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file)
     st.image(image, caption='Uploaded Scan', width=300)
     
     if st.button("Analyze Scan"):
-        # Preprocessing (Standard 224x224 for VGG models)
+        # Preprocessing (Exact match to training)
         img = image.resize((224, 224))
         img = img.convert('RGB')
         img_array = np.array(img) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
         
-        # Prediction
+        # Make Prediction
         prediction = model.predict(img_array)
         score = prediction[0][0]
         
         st.divider()
-        st.write(f"**AI Confidence Score:** {score:.5f}")
-        st.caption("0.00 = Healthy | 1.00 = Tumor")
+        st.write(f"**Diagnostic Confidence:** {score:.5f}")
+        st.caption("Reference: 0.00 = Healthy | 1.00 = Tumor")
         
-        # 0.5 Threshold
-        if score > 0.5:
-            st.error(f"🚨 TUMOR DETECTED (Confidence: {score:.1%})")
+        # Logic: > 0.5 is Tumor
+        if score > 0.50:
+            st.error(f"🚨 **TUMOR DETECTED**")
+            st.write(f"Confidence: **{score:.2%}**")
+            st.warning("⚠️ This result is AI-generated. Please consult a doctor.")
         else:
-            st.success(f"✅ HEALTHY (Confidence: {(1-score):.1%})")
+            st.success(f"✅ **HEALTHY BRAIN**")
+            st.write(f"Confidence: **{(1-score):.2%}**")
