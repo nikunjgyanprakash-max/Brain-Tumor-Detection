@@ -1,51 +1,71 @@
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
+from tensorflow.keras.applications.resnet50 import preprocess_input # UPDATED TO RESNET
 from tensorflow.keras.preprocessing.image import img_to_array
 from PIL import Image
 import numpy as np
 import gdown
 import os
 
-# --- DRIVE ID ---
-file_id = '1o91lMmfr_rRxlwT8_ygoU78KBs1Q50ax' 
+# --- DRIVE ID (Update this after you upload your new .h5 file) ---
+file_id = '1bw5iMUCnJe0pP0AOSeXvv4U-V4HxPbyH' 
+# ----------------------------------------------------------------
 
 @st.cache_resource
 def load_model_from_drive():
-    filename = 'brain_tumor_model_v5.h5'
+    filename = 'brain_tumor_model.h5'
     url = f'https://drive.google.com/uc?id={file_id}'
     if not os.path.exists(filename):
-        gdown.download(url, filename, quiet=False)
+        with st.spinner("Downloading ResNet50 Expert Model..."):
+            gdown.download(url, filename, quiet=False)
     return load_model(filename)
 
-st.title("🧠 NeuroScan: Final Logic Fix")
+st.set_page_config(page_title="NeuroScan ResNet", page_icon="🧠")
+st.title("🧠 NeuroScan: ResNet50 Expert Edition")
 
-model = load_model_from_drive()
-uploaded_file = st.file_uploader("Upload MRI", type=["jpg", "png", "jpeg"])
+try:
+    model = load_model_from_drive()
+    st.sidebar.success("✅ ResNet50 Engine Online")
+except Exception as e:
+    st.sidebar.error("❌ Engine Offline")
+    st.stop()
+
+uploaded_file = st.file_uploader("Upload MRI for Expert Analysis", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, width=300)
+    st.image(image, caption='MRI Scan', width=300)
     
-    if st.button("Deep Analysis"):
-        # 1. Resize and Prepare
+    if st.button("Run ResNet Analysis"):
+        # 1. Resize to 224x224
         img = image.resize((224, 224))
-        img_array = img_to_array(img) / 255.0
+        
+        # 2. Convert to Array
+        img_array = img_to_array(img)
+        
+        # 3. Add Batch Dimension
         img_array = np.expand_dims(img_array, axis=0)
         
-        # 2. Get the Prediction
-        prediction = model.predict(img_array)
+        # 4. OFFICIAL RESNET PREPROCESSING (Essential!)
+        # Do NOT divide by 255 manually; this function handles it.
+        img_preprocessed = preprocess_input(img_array)
+        
+        # 5. Predict
+        prediction = model.predict(img_preprocessed)
         score = float(prediction[0][0])
         
-        # 3. Calculate "Tumor Confidence" (Flipping the 0/1 logic)
-        tumor_confidence = 1.0 - score 
+        # Logic Check: Did your training use 'Brain_Tumor' as the first folder?
+        # If yes, 0 is Tumor. We calculate Tumor Probability:
+        tumor_prob = 1.0 - score 
         
-        st.write(f"**AI Suspicion Level:** {tumor_confidence:.2%}")
-
-        # --- THE FIX: HIGH SENSITIVITY THRESHOLD ---
-        # If the AI is even slightly suspicious (>15%), we flag it.
-        if tumor_confidence > 0.15:
-            st.error(f"🚨 TUMOR DETECTED ({tumor_confidence:.1%})")
-            st.warning("Clinical Alert: AI has identified suspicious patterns.")
+        st.divider()
+        st.subheader(f"AI Confidence: {tumor_prob:.2%}")
+        
+        # We use a 0.5 threshold for the expert model
+        if tumor_prob > 0.5:
+            st.error("🚨 TUMOR DETECTED")
+            st.info("The ResNet50 model identifies patterns consistent with a tumor.")
         else:
-            st.success(f"✅ HEALTHY ({1.0 - tumor_confidence:.1%})")
+            st.success("✅ HEALTHY BRAIN")
+            st.info("No tumorous patterns identified by the deep neural network.")
