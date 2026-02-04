@@ -8,12 +8,12 @@ import os
 
 # --- 1. SETUP: PASTE YOUR DRIVE ID HERE ---
 # -----------------------------------------------------
-file_id = 'PASTE_YOUR_GOOGLE_DRIVE_ID_HERE' 
+file_id = '1o91lMmfr_rRxlwT8_ygoU78KBs1Q50ax' 
 # -----------------------------------------------------
 
 @st.cache_resource
 def load_model_from_drive():
-    url = f'https://drive.google.com/uc?id={1o91lMmfr_rRxlwT8_ygoU78KBs1Q50ax}'
+    url = f'https://drive.google.com/uc?id={file_id}'
     output = 'brain_tumor_model.h5'
     
     # Download only if we don't have it yet
