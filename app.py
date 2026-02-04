@@ -13,56 +13,49 @@ file_id = '1o91lMmfr_rRxlwT8_ygoU78KBs1Q50ax'
 
 @st.cache_resource
 def load_model_from_drive():
-    filename = 'brain_tumor_model_v7.h5' # v7: The Logic Fix
+    filename = 'brain_tumor_model_v5.h5'
     url = f'https://drive.google.com/uc?id={file_id}'
-
     if not os.path.exists(filename):
-        with st.spinner("Downloading AI Brain (500 MB)..."):
+        with st.spinner("Loading Expert Brain..."):
             gdown.download(url, filename, quiet=False)
-            
-    model = load_model(filename)
-    return model
+    return load_model(filename)
 
 st.set_page_config(page_title="NeuroScan Pro", page_icon="🧠")
-st.title("🧠 NeuroScan: Professional Edition")
+st.title("🧠 NeuroScan: Clinical Dashboard")
 
-try:
-    model = load_model_from_drive()
-    st.success("✅ Model System Active")
-except Exception as e:
-    st.error(f"System Error: {e}")
+model = load_model_from_drive()
 
-uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Upload MRI", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption='Uploaded Scan', width=300)
+    st.image(image, caption='Target Scan', width=300)
     
-    if st.button("Analyze Scan"):
-        # 1. Standard Preprocessing (No Sliders, Just Math)
+    if st.button("Run Diagnostic"):
+        # Preprocessing
         img = image.resize((224, 224))
-        img_array = img_to_array(img)
-        img_array = img_array / 255.0
+        img_array = img_to_array(img) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
         
-        # 2. Prediction
+        # Predict
         prediction = model.predict(img_array)
         score = prediction[0][0]
         
-        # --- THE LOGIC FIX ---
-        # If Class 0 is Tumor, then a LOW score means TUMOR.
-        # We calculate "Tumor Probability" as (1 - score)
+        # Our Logic Fix: 1 - score = Tumor probability
+        prob = (1 - score) * 100
         
-        tumor_probability = 1 - score
+        st.subheader("Analysis Result")
         
-        st.divider()
-        st.write(f"**Diagnostic Analysis:**")
-        
-        if tumor_probability > 0.50:
-            st.error(f"🚨 **TUMOR DETECTED**")
-            st.write(f"Confidence: **{tumor_probability:.2%}**")
-            st.caption("The AI has identified patterns consistent with a brain tumor.")
+        # --- THE PROBABILITY GAUGE ---
+        if prob > 50:
+            st.error(f"Prediction: TUMOR DETECTED")
+            st.progress(prob / 100) # Red-ish bar
         else:
-            st.success(f"✅ **HEALTHY BRAIN**")
-            st.write(f"Confidence: **{(1-tumor_probability):.2%}**")
-            st.caption("No tumor patterns detected.")
+            st.success(f"Prediction: HEALTHY")
+            st.progress(prob / 100) # Green-ish bar
+            
+        st.write(f"**Tumor Probability Index:** {prob:.2f}%")
+        
+        # --- SMART ADVICE ---
+        if 30 < prob < 70:
+            st.warning("⚠️ **Low Confidence Alert:** The AI is seeing conflicting patterns. This often happens with necrotic (dark-centered) tumors or T1-weighted scans.")
