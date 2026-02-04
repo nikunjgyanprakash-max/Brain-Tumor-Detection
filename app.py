@@ -1,16 +1,15 @@
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.resnet50 import preprocess_input # UPDATED TO RESNET
+from tensorflow.keras.applications.resnet50 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 from PIL import Image
 import numpy as np
 import gdown
 import os
 
-# --- DRIVE ID (Update this after you upload your new .h5 file) ---
+# --- DRIVE ID ---
 file_id = '1bw5iMUCnJe0pP0AOSeXvv4U-V4HxPbyH' 
-# ----------------------------------------------------------------
 
 @st.cache_resource
 def load_model_from_drive():
@@ -28,7 +27,7 @@ try:
     model = load_model_from_drive()
     st.sidebar.success("✅ ResNet50 Engine Online")
 except Exception as e:
-    st.sidebar.error("❌ Engine Offline")
+    st.sidebar.error(f"❌ Engine Offline: {e}")
     st.stop()
 
 uploaded_file = st.file_uploader("Upload MRI for Expert Analysis", type=["jpg", "png", "jpeg"])
@@ -47,31 +46,28 @@ if uploaded_file:
         # 3. Add Batch Dimension
         img_array = np.expand_dims(img_array, axis=0)
         
-        # 4. OFFICIAL RESNET PREPROCESSING (Essential!)
-        # Do NOT divide by 255 manually; this function handles it.
+        # 4. OFFICIAL RESNET PREPROCESSING
         img_preprocessed = preprocess_input(img_array)
         
-        # 5. # Use this block to see exactly what the model "thinks"
-prediction = model.predict(img_preprocessed)
-raw_score = float(prediction[0][0])
+        # 5. Prediction (FIXED INDENTATION BELOW)
+        prediction = model.predict(img_preprocessed)
+        raw_score = float(prediction[0][0])
 
-st.write(f"**Raw AI Output Score:** {raw_score:.4f}")
+        st.write(f"**Raw AI Output Score:** {raw_score:.4f}")
 
-# Map the scores to classes based on alphabetical order
-# Score < 0.5 usually means Class 0 (the first folder alphabetically)
-if raw_score < 0.5:
-    st.error("Model Result: Class 0 (Check if this is Tumor in your folders)")
-else:
-    st.success("Model Result: Class 1 (Check if this is Healthy in your folders)")
+        # Map scores to labels
+        if raw_score < 0.5:
+            st.error("Model Result: Class 0 (Likely Tumor)")
+        else:
+            st.success("Model Result: Class 1 (Likely Healthy)")
         
-        # Logic Check: Did your training use 'Brain_Tumor' as the first folder?
-        # If yes, 0 is Tumor. We calculate Tumor Probability:
-        tumor_prob = 1.0 - score 
+        # Calculate Tumor Probability
+        # If folder order was Brain_Tumor=0, then prob = 1 - score
+        tumor_prob = 1.0 - raw_score 
         
         st.divider()
         st.subheader(f"AI Confidence: {tumor_prob:.2%}")
         
-        # We use a 0.5 threshold for the expert model
         if tumor_prob > 0.5:
             st.error("🚨 TUMOR DETECTED")
             st.info("The ResNet50 model identifies patterns consistent with a tumor.")
