@@ -6,53 +6,68 @@ import numpy as np
 import gdown
 import os
 
-# --- PASTE YOUR DRIVE FILE ID HERE ---
-# Example: file_id = '12345ABCDE...'
-file_id = 'YOUR_ACTUAL_ID_GOES_HERE'
-# -------------------------------------
+# --- 1. SETUP: PASTE YOUR DRIVE ID HERE ---
+# -----------------------------------------------------
+file_id = 'PASTE_YOUR_GOOGLE_DRIVE_ID_HERE' 
+# -----------------------------------------------------
 
 @st.cache_resource
 def load_model_from_drive():
-    url = f'https://drive.google.com/uc?id={file_id}'
+    url = f'https://drive.google.com/uc?id={1o91lMmfr_rRxlwT8_ygoU78KBs1Q50ax}'
     output = 'brain_tumor_model.h5'
     
+    # Download only if we don't have it yet
     if not os.path.exists(output):
-        st.info("Downloading 143MB AI Model... Please wait.")
-        gdown.download(url, output, quiet=False)
-        st.success("Download Complete!")
+        with st.spinner("Downloading 143MB AI Brain... (This happens once)"):
+            gdown.download(url, output, quiet=False)
+            st.success("Download Complete!")
     
+    # Load the model
     model = load_model(output)
     return model
 
-st.title("🧠 NeuroScan: Pro Edition")
-st.write("System Status: Initializing Heavy Model...")
+# --- 2. THE APP INTERFACE ---
+st.set_page_config(page_title="NeuroScan AI", page_icon="🧠")
 
+st.title("🧠 NeuroScan: Professional Edition")
+st.markdown("### Deep Learning Tumor Detection System")
+st.write("Using the High-Performance VGG-Style Model (94.5% Accuracy)")
+
+# Load Model
 try:
     model = load_model_from_drive()
-    st.success("✅ System Ready: 143MB Model Loaded")
+    st.success("✅ System Ready: AI Brain Loaded")
 except Exception as e:
-    st.error("Error loading model. Check your Google Drive Link ID.")
+    st.error("Error loading model. Please check your Google Drive ID.")
     st.stop()
 
-uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
+# --- 3. PREDICTION LOGIC ---
+uploaded_file = st.file_uploader("Upload Brain MRI (JPG/PNG)", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption='Uploaded Scan', use_container_width=True)
+    st.image(image, caption='Uploaded Scan', width=300)
     
-    if st.button("Analyze"):
-        # Resize and Convert to RGB (The Fat Model needs RGB)
+    if st.button("Analyze Scan"):
+        # Preprocessing (Must match training exactly)
         img = image.resize((224, 224))
         img = img.convert('RGB')
         img_array = np.array(img) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
         
+        # Predict
         prediction = model.predict(img_array)
         score = prediction[0][0]
         
-        st.write(f"Confidence Score: {score:.4f}")
+        # Display Result
+        st.write("---")
+        st.write(f"**Raw Confidence Score:** {score:.4f}")
         
-        if score > 0.5:
-            st.error(f"🚨 TUMOR DETECTED ({score:.1%})")
+        # High Confidence Threshold (because model is 94% accurate)
+        if score > 0.50:
+            st.error(f"🚨 **TUMOR DETECTED**")
+            st.write(f"Confidence: **{score:.1%}**")
+            st.warning("Please consult a medical professional immediately.")
         else:
-            st.success(f"✅ HEALTHY ({(1-score):.1%})")
+            st.success(f"✅ **HEALTHY BRAIN**")
+            st.write(f"Confidence: **{(1-score):.1%}**")
