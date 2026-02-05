@@ -38,7 +38,7 @@ img_array = np.expand_dims(img_array, axis=0)   # batch
     prediction = model.predict(img_array)
    score = float(prediction[0][0])
 
-if score > 0.5:
+if score > 0.7:
     st.error(f"Tumor Detected (Confidence: {score:.2%})")
 else:
     st.success(f"Healthy (Confidence: {(1-score):.2%})")
