@@ -23,22 +23,18 @@ model = load_model_from_drive()
 uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    image = Image.open(uploaded_file).convert("L")
-
+    image = Image.open(uploaded_file).convert("L") # Direct Grayscale
     img = image.resize((224, 224))
-
+    
+    # Standard medical normalization
     img_array = np.asarray(img).astype("float32") / 255.0
-
-    img_array = np.stack([img_array]*3, axis=-1)
-    img_array = np.expand_dims(img_array, axis=0)
-
-    st.write("Input shape:", img_array.shape)
+    img_array = np.expand_dims(img_array, axis=(0, -1)) # Reshapes to (1, 224, 224, 1)
 
     prediction = model.predict(img_array, verbose=0)
-
     score = float(prediction[0][0])
-
+    
+    # Logic: 0 is usually Tumor (Alphabetical Folder Rule)
     if score < 0.5:
-        st.error(f"Tumor Detected (Confidence: {score:.2%})")
+        st.error(f"🚨 TUMOR DETECTED (Confidence: {(1-score):.2%})")
     else:
-        st.success(f"Healthy (Confidence: {(1-score):.2%})")
+        st.success(f"✅ HEALTHY BRAIN (Confidence: {score:.2%})")
