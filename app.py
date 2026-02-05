@@ -24,13 +24,15 @@ model = load_model_from_drive()
 uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, width=300)
-    
-    # 1. Prepare image
-    img = image.resize((224, 224))
-    img_array = img_to_array(img) / 255.0  # Basic normalization
-    img_array = np.expand_dims(img_array, axis=0)
+    image = Image.open(uploaded_file).convert("L")   # grayscale
+
+img = image.resize((224, 224))
+
+img_array = np.array(img) / 255.0
+
+img_array = np.expand_dims(img_array, axis=-1)  # channel
+img_array = np.expand_dims(img_array, axis=0)   # batch
+
     
     # 2. Get prediction
     prediction = model.predict(img_array)
