@@ -1,7 +1,5 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-# --- ADDED TO TOP ---
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau 
 from model import build_tumor_detector
 import os
 
@@ -49,18 +47,12 @@ model.compile(optimizer='adam',
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
-# --- ADDED JUST ABOVE STEP 6 ---
-# These are your safety nets for the 35-epoch mission
-early_stop = EarlyStopping(monitor='val_loss', patience=7, restore_best_weights=True)
-reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=1e-6)
-
 # 6. Start Training
-print("--- Starting Mission Training (35 Epochs) ---")
+print("--- Starting Training (25 Epochs) ---")
 history = model.fit(
     train_generator,
-    epochs=35, # Updated to 35
-    validation_data=validation_generator,
-    callbacks=[early_stop, reduce_lr] # Connecting the safety nets
+    epochs=25, 
+    validation_data=validation_generator
 )
 
 # 7. Save the "Brain"
