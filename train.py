@@ -55,7 +55,7 @@ model.compile(optimizer='adam',
 print("--- Starting Training ---")
 history = model.fit(
     train_generator,
-    epochs=10,             # How many times to loop through the entire dataset
+    epochs=25,             # How many times to loop through the entire dataset
     validation_data=validation_generator
 )
 
