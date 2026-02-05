@@ -38,7 +38,7 @@ if uploaded_file:
 
     score = float(prediction[0][0])
 
-    if score > 0.65:
+    if score < 0.5:
         st.error(f"Tumor Detected (Confidence: {score:.2%})")
     else:
         st.success(f"Healthy (Confidence: {(1-score):.2%})")
