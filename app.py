@@ -24,21 +24,18 @@ model = load_model_from_drive()
 uploaded_file = st.file_uploader("Upload MRI Scan", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    image = Image.open(uploaded_file).convert("L")   # grayscale
+    image = Image.open(uploaded_file).convert("L")
 
-img = image.resize((224, 224))
+    img = image.resize((224, 224))
+    img_array = np.array(img) / 255.0
 
-img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=-1)
+    img_array = np.expand_dims(img_array, axis=0)
 
-img_array = np.expand_dims(img_array, axis=-1)  # channel
-img_array = np.expand_dims(img_array, axis=0)   # batch
-
-    
-    # 2. Get prediction
     prediction = model.predict(img_array)
-   score = float(prediction[0][0])
+    score = float(prediction[0][0])
 
-if score > 0.7:
-    st.error(f"Tumor Detected (Confidence: {score:.2%})")
-else:
-    st.success(f"Healthy (Confidence: {(1-score):.2%})")
+    if score > 0.65:
+        st.error(f"Tumor Detected (Confidence: {score:.2%})")
+    else:
+        st.success(f"Healthy (Confidence: {(1-score):.2%})")
