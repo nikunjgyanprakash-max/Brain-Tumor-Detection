@@ -27,10 +27,12 @@ if uploaded_file:
     image = Image.open(uploaded_file).convert("L")
 
     img = image.resize((224, 224))
-    img_array = np.array(img) / 255.0
 
-    img_array = np.expand_dims(img_array, axis=-1)
-    img_array = np.expand_dims(img_array, axis=0)
+    img_array = np.array(img, dtype=np.float32)
+    img_array = img_array / 255.0
+
+    # Force correct shape: (1, 224, 224, 1)
+    img_array = img_array.reshape(1, 224, 224, 1)
 
     prediction = model.predict(img_array)
     score = float(prediction[0][0])
@@ -39,3 +41,4 @@ if uploaded_file:
         st.error(f"Tumor Detected (Confidence: {score:.2%})")
     else:
         st.success(f"Healthy (Confidence: {(1-score):.2%})")
+
