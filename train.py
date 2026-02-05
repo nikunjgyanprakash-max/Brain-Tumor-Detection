@@ -31,6 +31,7 @@ train_generator = train_datagen.flow_from_directory(
     class_mode='binary',    # Binary because we are detecting Tumor vs No Tumor
     color_mode='grayscale'  # Must match the '1' channel in model.py
 )
+print("Class mapping:", train_generator.class_indices)
 
 validation_generator = val_datagen.flow_from_directory(
     val_dir,
