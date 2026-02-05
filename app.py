@@ -10,7 +10,7 @@ import os
 # 1. Upload your NEW 'brain_tumor_model.h5' (the 3000-image one) to Google Drive.
 # 2. Right-click > Share > Anyone with link > Copy Link.
 # 3. Paste the NEW ID here.
-file_id = '1bw5iMUCnJe0pP0AOSeXvv4U-V4HxPbyH' # <--- UPDATE THIS ID
+file_id = '11WbPy5hYZQo-rPNXjmf2ewcWI8368M61' # <--- UPDATE THIS ID
 
 @st.cache_resource
 def load_model_from_drive():
