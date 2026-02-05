@@ -1,7 +1,6 @@
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
 from PIL import Image
 import numpy as np
 import gdown
@@ -12,7 +11,7 @@ file_id = '1bw5iMUCnJe0pP0AOSeXvv4U-V4HxPbyH'
 
 @st.cache_resource
 def load_model_from_drive():
-    filename = 'model.h5'
+    filename = 'brain_tumor_model.h5'
     if not os.path.exists(filename):
         url = f'https://drive.google.com/uc?id={file_id}'
         gdown.download(url, filename, quiet=False)
@@ -28,12 +27,10 @@ if uploaded_file:
 
     img = image.resize((224, 224))
 
-    img_array = np.asarray(img)
+    img_array = np.asarray(img).astype("float32") / 255.0
 
-    img_array = img_array.astype("float32") / 255.0
-
-    img_array = np.expand_dims(img_array, axis=-1)  # channel
-    img_array = np.expand_dims(img_array, axis=0)   # batch
+    img_array = np.expand_dims(img_array, axis=-1)
+    img_array = np.expand_dims(img_array, axis=0)
 
     st.write("Input shape:", img_array.shape)
 
@@ -45,7 +42,3 @@ if uploaded_file:
         st.error(f"Tumor Detected (Confidence: {score:.2%})")
     else:
         st.success(f"Healthy (Confidence: {(1-score):.2%})")
-
-    else:
-        st.success(f"Healthy (Confidence: {(1-score):.2%})")
-
