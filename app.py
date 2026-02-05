@@ -37,9 +37,6 @@ if uploaded_file:
         # 3. Normalize (0-1 range)
         img_array = np.asarray(img).astype("float32") / 255.0
 
-        # --- THE FIX IS HERE ---
-        # OLD: img_array = np.stack([img_array]*3, axis=-1)  <-- DELETE THIS
-        # NEW: We add 1 channel dimension for Grayscale
         img_array = np.expand_dims(img_array, axis=-1) # Shape: (224, 224, 1)
         img_array = np.expand_dims(img_array, axis=0)  # Shape: (1, 224, 224, 1)
 
