@@ -36,10 +36,9 @@ img_array = np.expand_dims(img_array, axis=0)   # batch
     
     # 2. Get prediction
     prediction = model.predict(img_array)
-    score = prediction[0][0]
-    
-    # 3. Output result
-    if score < 0.5:
-        st.error(f"Tumor Detected (Score: {score:.4f})")
-    else:
-        st.success(f"Healthy (Score: {score:.4f})")
+   score = float(prediction[0][0])
+
+if score > 0.5:
+    st.error(f"Tumor Detected (Confidence: {score:.2%})")
+else:
+    st.success(f"Healthy (Confidence: {(1-score):.2%})")
