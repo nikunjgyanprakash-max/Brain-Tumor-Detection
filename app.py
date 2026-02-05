@@ -29,7 +29,7 @@ if uploaded_file:
 
     img_array = np.asarray(img).astype("float32") / 255.0
 
-    img_array = np.expand_dims(img_array, axis=-1)
+    img_array = np.stack([img_array]*3, axis=-1)
     img_array = np.expand_dims(img_array, axis=0)
 
     st.write("Input shape:", img_array.shape)
