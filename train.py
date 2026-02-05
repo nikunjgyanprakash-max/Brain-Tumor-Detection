@@ -11,7 +11,14 @@ val_dir = os.path.join(base_dir, 'val')
 
 # 2. The Data Pipeline (Automated Loading)
 # rescale=1./255 does the normalization we discussed earlier
-train_datagen = ImageDataGenerator(rescale=1./255)
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=10,
+    zoom_range=0.1,
+    width_shift_range=0.05,
+    height_shift_range=0.05
+)
+
 val_datagen = ImageDataGenerator(rescale=1./255)
 
 # 3. Connect Pipeline to Folders
