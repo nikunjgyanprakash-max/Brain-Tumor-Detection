@@ -6,8 +6,6 @@ import numpy as np
 import gdown
 import os
 
-# --- DRIVE ID ---
-# Paste the ID of your NEW 85% model here
 file_id = '11WbPy5hYZQo-rPNXjmf2ewcWI8368M61' 
 
 @st.cache_resource
@@ -56,25 +54,6 @@ if uploaded_file:
             # Score is closer to 0 (Healthy)
             confidence = 1.0 - score
             st.success(f"✅ HEALTHY BRAIN ({confidence:.2%})")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
